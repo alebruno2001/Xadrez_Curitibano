@@ -2,23 +2,22 @@ package xadrez;
 
 import java.awt.Color;
 import java.awt.Graphics2D;
-import java.awt.Image;
-import java.awt.event.ActionEvent;
-import java.awt.event.ActionListener;
 import java.awt.event.MouseEvent;
 import java.awt.event.MouseListener;
 import java.awt.image.BufferedImage;
-import java.awt.image.ImageObserver;
 import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.HashSet;
 
 import javax.imageio.ImageIO;
-import javax.swing.*;
+import javax.swing.ImageIcon;
+import javax.swing.JFrame;
+import javax.swing.JLabel;
+import javax.swing.JPanel;
+import javax.swing.JScrollPane;
 
-@SuppressWarnings({ "serial", "unused" })
+@SuppressWarnings({"serial"})
 public class Tabuleiro extends JFrame {
 	
 	Graphics2D g;
@@ -41,7 +40,7 @@ public class Tabuleiro extends JFrame {
 	boolean isWhiteTurn;
 	int[] buffer_pos;
 	int buffer_id;
-	HashSet<int[]> casas_destacadas;
+	ArrayList<int[]> casas_destacadas;
 	int peca_selecionada;
 	int[] fora;
 	
@@ -80,13 +79,13 @@ public class Tabuleiro extends JFrame {
 		buffer_id = 2;
 		arrumarTabuleiro();
 		isWhiteTurn = true;
-		casas_destacadas = new HashSet<int[]>();
+		casas_destacadas = new ArrayList<int[]>();
 		fora = new int[] {8,8,8};
 		//peca_selecionada = 0;
 		
 		getContentPane().add(scroll);
 		setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
-		setSize(1775,246);
+		setSize(1790,246);
 		//this.pack();
 		this.setResizable(false);
 		setVisible(true);
@@ -105,7 +104,6 @@ public class Tabuleiro extends JFrame {
 			
 			if (isWhiteTurn) {
 				for (int[] casa : casas_destacadas) {
-					System.out.println(casa[0]);
 					if (buffer_pos[2]==casa[2] && buffer_pos[1]==casa[1] && buffer_pos[0]==casa[0]) {
 						limparDestaque();
 						
@@ -139,7 +137,6 @@ public class Tabuleiro extends JFrame {
 						
 						isWhiteTurn = false;
 						buffer = false;
-						System.out.println("Ok");
 						
 						break;
 					}
@@ -193,7 +190,6 @@ public class Tabuleiro extends JFrame {
 						
 						isWhiteTurn = true;
 						buffer = false;
-						System.out.println("Ok");
 						
 						break;
 					}
@@ -202,7 +198,6 @@ public class Tabuleiro extends JFrame {
 					for (int i = 0; i < 128; i++) {
 						Peca peca = pecas_pretas[i];
 						if (buffer_pos[2]==peca.posicao[2] && buffer_pos[1]==peca.posicao[1] && buffer_pos[0]==peca.posicao[0]) {
-							System.out.println(peca.id);
 							limparDestaque();
 							selecionarPeca(peca);
 							peca_selecionada = i;
@@ -228,6 +223,9 @@ public class Tabuleiro extends JFrame {
 	}
 	
 	public void selecionarPeca(Peca p) {
+		int[] buff = new int[3];
+		buff = p.posicao.clone();
+		
 		switch (p.id) {
 		case (0):
 			for (int i = 0; i < 3; i++) {
@@ -238,69 +236,187 @@ public class Tabuleiro extends JFrame {
 				}
 			} break;
 		case (1):
-			for (int i = 0; i < 8; i++) {
-				casas_destacadas.add(new int[] {p.posicao[0],p.posicao[1],i});
-				casas_destacadas.add(new int[] {p.posicao[0],i,p.posicao[2]});
-				casas_destacadas.add(new int[] {i,p.posicao[1],p.posicao[2]});
+			for (int j = 0; j < 3; j++) {
+				for (int i = p.posicao[j]+1; i < 8; i++) {
+					buff[j] = i;
+					casas_destacadas.add(buff.clone());
+					if (estaOcupada(buff)) {break;}
+				}
+				for (int i = p.posicao[j]-1; i >= 0; i--) {
+					buff[j] = i;
+					casas_destacadas.add(buff.clone());
+					if (estaOcupada(buff)) {break;}
+				}
+				buff[j] = p.posicao[j];
 			}
-			for (int i = -7; i < 8; i++) {
-				casas_destacadas.add(new int[] {p.posicao[0]  ,p.posicao[1]+i,p.posicao[2]+i});
-				casas_destacadas.add(new int[] {p.posicao[0]+i,p.posicao[1]  ,p.posicao[2]+i});
-				casas_destacadas.add(new int[] {p.posicao[0]+i,p.posicao[1]+i,p.posicao[2]  });
-				casas_destacadas.add(new int[] {p.posicao[0]  ,p.posicao[1]-i,p.posicao[2]+i});
-				casas_destacadas.add(new int[] {p.posicao[0]-i,p.posicao[1]  ,p.posicao[2]+i});
-				casas_destacadas.add(new int[] {p.posicao[0]-i,p.posicao[1]+i,p.posicao[2]  });
+			
+			for (int i = -1; i <= 1; i++) {
+				for (int j = -1; j <= 1; j++) {
+					if (!(i==0 && j==0)) {
+						for (int l = 1; l < 8; l++) {
+							buff[0] += i;
+							buff[1] += j;
+							buff[2] += 1-Math.abs(i*j);
+							casas_destacadas.add(buff.clone());
+							if (estaOcupada(buff)) {break;}
+						}
+						buff = p.posicao.clone();
+						for (int l = 1; l < 8; l++) {
+							buff[0] += i;
+							buff[1] += j;
+							buff[2] += -1+Math.abs(i*j);
+							casas_destacadas.add(buff.clone());
+							if (estaOcupada(buff)) {break;}
+						}
+						buff = p.posicao.clone();
+					}
+				}
 			}
-			for (int i = -7; i < 8; i++) {
-				casas_destacadas.add(new int[] {p.posicao[0]+i,p.posicao[1]+i,p.posicao[2]+i});
-				casas_destacadas.add(new int[] {p.posicao[0]-i,p.posicao[1]+i,p.posicao[2]+i});
-				casas_destacadas.add(new int[] {p.posicao[0]+i,p.posicao[1]-i,p.posicao[2]+i});
-				casas_destacadas.add(new int[] {p.posicao[0]+i,p.posicao[1]+i,p.posicao[2]-i});
-				casas_destacadas.add(new int[] {p.posicao[0]-i,p.posicao[1]-i,p.posicao[2]+i});
-				casas_destacadas.add(new int[] {p.posicao[0]-i,p.posicao[1]-i,p.posicao[2]+i});
-				casas_destacadas.add(new int[] {p.posicao[0]-i,p.posicao[1]+i,p.posicao[2]-i});
-				casas_destacadas.add(new int[] {p.posicao[0]-i,p.posicao[1]-i,p.posicao[2]-i});
+			
+			for (int i = -1; i <= 1; i += 2) {
+				for (int j = -1; j <= 1; j += 2) {
+					for (int k = -1; k <= 1; k += 2) {
+						for (int l = 1; l < 8; l++) {
+							buff[0] += i;
+							buff[1] += j;
+							buff[2] += k;
+							casas_destacadas.add(buff.clone());
+							if (estaOcupada(buff)) {break;}
+						}
+						buff = p.posicao.clone();
+					}
+				}
 			} break;
 		case (2):
 			if (p.isWhite) {
-				casas_destacadas.add(new int[] {p.posicao[0],p.posicao[1],p.posicao[2]+1});
-				casas_destacadas.add(new int[] {p.posicao[0]+1,p.posicao[1],p.posicao[2]+1});
-				casas_destacadas.add(new int[] {p.posicao[0]-1,p.posicao[1],p.posicao[2]+1});
-				casas_destacadas.add(new int[] {p.posicao[0],p.posicao[1]+1,p.posicao[2]+1});
-				casas_destacadas.add(new int[] {p.posicao[0],p.posicao[1]-1,p.posicao[2]+1});
+				int[] p0  = new int[] {p.posicao[0],p.posicao[1],p.posicao[2]+1};
+				int[] p00 = new int[] {p.posicao[0],p.posicao[1],p.posicao[2]+2};
+				casas_destacadas.add(p0);
+				if (p.posicao[2] == 1) {
+					casas_destacadas.add(p00);
+				}
+				
+				int[] p1 = new int[] {p.posicao[0]+1,p.posicao[1],p.posicao[2]+1};
+				int[] p2 = new int[] {p.posicao[0]-1,p.posicao[1],p.posicao[2]+1};
+				int[] p3 = new int[] {p.posicao[0],p.posicao[1]+1,p.posicao[2]+1};
+				int[] p4 = new int[] {p.posicao[0],p.posicao[1]-1,p.posicao[2]+1};
+				
+				for (Peca peca : pecas_pretas) {
+					if (Arrays.equals(peca.posicao, p1) || Arrays.equals(peca.posicao, p2) || Arrays.equals(peca.posicao, p3) || Arrays.equals(peca.posicao, p4)) {
+						casas_destacadas.add(peca.posicao);
+					}
+					if (Arrays.equals(peca.posicao, p0)) {
+						casas_destacadas.remove(p0);
+						casas_destacadas.remove(p00);
+					}
+					if (Arrays.equals(peca.posicao, p00)) {
+						casas_destacadas.remove(p00);
+					}
+				}
+				
+				for (Peca peca : pecas_brancas) {
+					if (Arrays.equals(peca.posicao, p0)) {
+						casas_destacadas.remove(p0);
+						casas_destacadas.remove(p00);
+					}
+				}
+				/* En passant
+				if (p.posicao[2] == 4) {
+					int[] l1 = new int[] {p.posicao[0]+1,p.posicao[1],p.posicao[2]};
+					int[] l2 = new int[] {p.posicao[0]-1,p.posicao[1],p.posicao[2]};
+					int[] l3 = new int[] {p.posicao[0],p.posicao[1]+1,p.posicao[2]};
+					int[] l4 = new int[] {p.posicao[0],p.posicao[1]-1,p.posicao[2]};
+					for (Peca peca : pecas_pretas) {
+						if (Arrays.equals(peca.posicao, l1) || Arrays.equals(peca.posicao, l2) || Arrays.equals(peca.posicao, l3) || Arrays.equals(peca.posicao, l4)) {
+							casas_destacadas.add(peca.posicao);
+						}
+					}
+				}*/
 			}
 			else {
-				casas_destacadas.add(new int[] {p.posicao[0],p.posicao[1],p.posicao[2]-1});
-				casas_destacadas.add(new int[] {p.posicao[0]+1,p.posicao[1],p.posicao[2]-1});
-				casas_destacadas.add(new int[] {p.posicao[0]-1,p.posicao[1],p.posicao[2]-1});
-				casas_destacadas.add(new int[] {p.posicao[0],p.posicao[1]+1,p.posicao[2]-1});
-				casas_destacadas.add(new int[] {p.posicao[0],p.posicao[1]-1,p.posicao[2]-1});
+				int[] p0  = new int[] {p.posicao[0],p.posicao[1],p.posicao[2]-1};
+				int[] p00 = new int[] {p.posicao[0],p.posicao[1],p.posicao[2]-2};
+				casas_destacadas.add(p0);
+				if (p.posicao[2] == 6) {
+					casas_destacadas.add(p00);
+				}
+				
+				int[] p1 = new int[] {p.posicao[0]+1,p.posicao[1],p.posicao[2]-1};
+				int[] p2 = new int[] {p.posicao[0]-1,p.posicao[1],p.posicao[2]-1};
+				int[] p3 = new int[] {p.posicao[0],p.posicao[1]+1,p.posicao[2]-1};
+				int[] p4 = new int[] {p.posicao[0],p.posicao[1]-1,p.posicao[2]-1};
+				
+				for (Peca peca : pecas_brancas) {
+					if (Arrays.equals(peca.posicao, p1) || Arrays.equals(peca.posicao, p2) || Arrays.equals(peca.posicao, p3) || Arrays.equals(peca.posicao, p4)) {
+						casas_destacadas.add(peca.posicao);
+					}
+					if (Arrays.equals(peca.posicao, p0)) {
+						casas_destacadas.remove(p0);
+						casas_destacadas.remove(p00);
+					}
+					if (Arrays.equals(peca.posicao, p00)) {
+						casas_destacadas.remove(p00);
+					}
+				}
+				
+				for (Peca peca : pecas_pretas) {
+					if (Arrays.equals(peca.posicao, p0)) {
+						casas_destacadas.remove(p0);
+						casas_destacadas.remove(p00);
+					}
+				}
 			} break;
 		case (3):
-			for (int i = 0; i < 8; i++) {
-				casas_destacadas.add(new int[] {p.posicao[0],p.posicao[1],i});
-				casas_destacadas.add(new int[] {p.posicao[0],i,p.posicao[2]});
-				casas_destacadas.add(new int[] {i,p.posicao[1],p.posicao[2]});
+			for (int j = 0; j < 3; j++) {
+				for (int i = p.posicao[j]+1; i < 8; i++) {
+					buff[j] = i;
+					casas_destacadas.add(buff.clone());
+					if (estaOcupada(buff)) {break;}
+				}
+				for (int i = p.posicao[j]-1; i >= 0; i--) {
+					buff[j] = i;
+					casas_destacadas.add(buff.clone());
+					if (estaOcupada(buff)) {break;}
+				}
+				buff[j] = p.posicao[j];
 			} break;
 		case (4):
-			for (int i = -7; i < 8; i++) {
-				casas_destacadas.add(new int[] {p.posicao[0]  ,p.posicao[1]+i,p.posicao[2]+i});
-				casas_destacadas.add(new int[] {p.posicao[0]+i,p.posicao[1]  ,p.posicao[2]+i});
-				casas_destacadas.add(new int[] {p.posicao[0]+i,p.posicao[1]+i,p.posicao[2]  });
-				casas_destacadas.add(new int[] {p.posicao[0]  ,p.posicao[1]-i,p.posicao[2]+i});
-				casas_destacadas.add(new int[] {p.posicao[0]-i,p.posicao[1]  ,p.posicao[2]+i});
-				casas_destacadas.add(new int[] {p.posicao[0]-i,p.posicao[1]+i,p.posicao[2]  });
+			for (int i = -1; i <= 1; i++) {
+				for (int j = -1; j <= 1; j++) {
+					if (!(i==0 && j==0)) {
+						for (int l = 1; l < 8; l++) {
+							buff[0] += i;
+							buff[1] += j;
+							buff[2] += 1-Math.abs(i*j);
+							casas_destacadas.add(buff.clone());
+							if (estaOcupada(buff)) {break;}
+						}
+						buff = p.posicao.clone();
+						for (int l = 1; l < 8; l++) {
+							buff[0] += i;
+							buff[1] += j;
+							buff[2] += -1+Math.abs(i*j);
+							casas_destacadas.add(buff.clone());
+							if (estaOcupada(buff)) {break;}
+						}
+						buff = p.posicao.clone();
+					}
+				}
 			} break;
 		case (5):
-			for (int i = -7; i < 8; i++) {
-				casas_destacadas.add(new int[] {p.posicao[0]+i,p.posicao[1]+i,p.posicao[2]+i});
-				casas_destacadas.add(new int[] {p.posicao[0]-i,p.posicao[1]+i,p.posicao[2]+i});
-				casas_destacadas.add(new int[] {p.posicao[0]+i,p.posicao[1]-i,p.posicao[2]+i});
-				casas_destacadas.add(new int[] {p.posicao[0]+i,p.posicao[1]+i,p.posicao[2]-i});
-				casas_destacadas.add(new int[] {p.posicao[0]-i,p.posicao[1]-i,p.posicao[2]+i});
-				casas_destacadas.add(new int[] {p.posicao[0]-i,p.posicao[1]-i,p.posicao[2]+i});
-				casas_destacadas.add(new int[] {p.posicao[0]-i,p.posicao[1]+i,p.posicao[2]-i});
-				casas_destacadas.add(new int[] {p.posicao[0]-i,p.posicao[1]-i,p.posicao[2]-i});
+			for (int i = -1; i <= 1; i += 2) {
+				for (int j = -1; j <= 1; j += 2) {
+					for (int k = -1; k <= 1; k += 2) {
+						for (int l = 1; l < 8; l++) {
+							buff[0] += i;
+							buff[1] += j;
+							buff[2] += k;
+							casas_destacadas.add(buff.clone());
+							if (estaOcupada(buff)) {break;}
+						}
+						buff = p.posicao.clone();
+					}
+				}
 			} break;
 		case (6):
 			for (int i = -1; i <= 1; i += 2) {
@@ -340,67 +456,163 @@ public class Tabuleiro extends JFrame {
 				}
 			} break;
 		case (9):
-			for (int i = 0; i < 8; i++) {
-				casas_destacadas.add(new int[] {p.posicao[0],p.posicao[1],i});
-				casas_destacadas.add(new int[] {p.posicao[0],i,p.posicao[2]});
-				casas_destacadas.add(new int[] {i,p.posicao[1],p.posicao[2]});
+			for (int j = 0; j < 3; j++) {
+				for (int i = p.posicao[j]+1; i < 8; i++) {
+					buff[j] = i;
+					casas_destacadas.add(buff.clone());
+					if (estaOcupada(buff)) {break;}
+				}
+				for (int i = p.posicao[j]-1; i >= 0; i--) {
+					buff[j] = i;
+					casas_destacadas.add(buff.clone());
+					if (estaOcupada(buff)) {break;}
+				}
+				buff[j] = p.posicao[j];
 			}
-			for (int i = -7; i < 8; i++) {
-				casas_destacadas.add(new int[] {p.posicao[0]  ,p.posicao[1]+i,p.posicao[2]+i});
-				casas_destacadas.add(new int[] {p.posicao[0]+i,p.posicao[1]  ,p.posicao[2]+i});
-				casas_destacadas.add(new int[] {p.posicao[0]+i,p.posicao[1]+i,p.posicao[2]  });
-				casas_destacadas.add(new int[] {p.posicao[0]  ,p.posicao[1]-i,p.posicao[2]+i});
-				casas_destacadas.add(new int[] {p.posicao[0]-i,p.posicao[1]  ,p.posicao[2]+i});
-				casas_destacadas.add(new int[] {p.posicao[0]-i,p.posicao[1]+i,p.posicao[2]  });
+			
+			for (int i = -1; i <= 1; i++) {
+				for (int j = -1; j <= 1; j++) {
+					if (!(i==0 && j==0)) {
+						for (int l = 1; l < 8; l++) {
+							buff[0] += i;
+							buff[1] += j;
+							buff[2] += 1-Math.abs(i*j);
+							casas_destacadas.add(buff.clone());
+							if (estaOcupada(buff)) {break;}
+						}
+						buff = p.posicao.clone();
+						for (int l = 1; l < 8; l++) {
+							buff[0] += i;
+							buff[1] += j;
+							buff[2] += -1+Math.abs(i*j);
+							casas_destacadas.add(buff.clone());
+							if (estaOcupada(buff)) {break;}
+						}
+						buff = p.posicao.clone();
+					}
+				}
 			} break;
 		case (10):
-			for (int i = 0; i < 8; i++) {
-				casas_destacadas.add(new int[] {p.posicao[0],p.posicao[1],i});
-				casas_destacadas.add(new int[] {p.posicao[0],i,p.posicao[2]});
-				casas_destacadas.add(new int[] {i,p.posicao[1],p.posicao[2]});
+			for (int j = 0; j < 3; j++) {
+				for (int i = p.posicao[j]+1; i < 8; i++) {
+					buff[j] = i;
+					casas_destacadas.add(buff.clone());
+					if (estaOcupada(buff)) {break;}
+				}
+				for (int i = p.posicao[j]-1; i >= 0; i--) {
+					buff[j] = i;
+					casas_destacadas.add(buff.clone());
+					if (estaOcupada(buff)) {break;}
+				}
+				buff[j] = p.posicao[j];
 			}
-			for (int i = -7; i < 8; i++) {
-				casas_destacadas.add(new int[] {p.posicao[0]+i,p.posicao[1]+i,p.posicao[2]+i});
-				casas_destacadas.add(new int[] {p.posicao[0]-i,p.posicao[1]+i,p.posicao[2]+i});
-				casas_destacadas.add(new int[] {p.posicao[0]+i,p.posicao[1]-i,p.posicao[2]+i});
-				casas_destacadas.add(new int[] {p.posicao[0]+i,p.posicao[1]+i,p.posicao[2]-i});
-				casas_destacadas.add(new int[] {p.posicao[0]-i,p.posicao[1]-i,p.posicao[2]+i});
-				casas_destacadas.add(new int[] {p.posicao[0]-i,p.posicao[1]-i,p.posicao[2]+i});
-				casas_destacadas.add(new int[] {p.posicao[0]-i,p.posicao[1]+i,p.posicao[2]-i});
-				casas_destacadas.add(new int[] {p.posicao[0]-i,p.posicao[1]-i,p.posicao[2]-i});
+			
+			for (int i = -1; i <= 1; i += 2) {
+				for (int j = -1; j <= 1; j += 2) {
+					for (int k = -1; k <= 1; k += 2) {
+						for (int l = 1; l < 8; l++) {
+							buff[0] += i;
+							buff[1] += j;
+							buff[2] += k;
+							casas_destacadas.add(buff.clone());
+							if (estaOcupada(buff)) {break;}
+						}
+						buff = p.posicao.clone();
+					}
+				}
 			} break;
 		case (11):
-			for (int i = -7; i < 8; i++) {
-				casas_destacadas.add(new int[] {p.posicao[0]  ,p.posicao[1]+i,p.posicao[2]+i});
-				casas_destacadas.add(new int[] {p.posicao[0]+i,p.posicao[1]  ,p.posicao[2]+i});
-				casas_destacadas.add(new int[] {p.posicao[0]+i,p.posicao[1]+i,p.posicao[2]  });
-				casas_destacadas.add(new int[] {p.posicao[0]  ,p.posicao[1]-i,p.posicao[2]+i});
-				casas_destacadas.add(new int[] {p.posicao[0]-i,p.posicao[1]  ,p.posicao[2]+i});
-				casas_destacadas.add(new int[] {p.posicao[0]-i,p.posicao[1]+i,p.posicao[2]  });
+			for (int i = -1; i <= 1; i++) {
+				for (int j = -1; j <= 1; j++) {
+					if (!(i==0 && j==0)) {
+						for (int l = 1; l < 8; l++) {
+							buff[0] += i;
+							buff[1] += j;
+							buff[2] += 1-Math.abs(i*j);
+							casas_destacadas.add(buff.clone());
+							if (estaOcupada(buff)) {break;}
+						}
+						buff = p.posicao.clone();
+						for (int l = 1; l < 8; l++) {
+							buff[0] += i;
+							buff[1] += j;
+							buff[2] += -1+Math.abs(i*j);
+							casas_destacadas.add(buff.clone());
+							if (estaOcupada(buff)) {break;}
+						}
+						buff = p.posicao.clone();
+					}
+				}
 			}
-			for (int i = -7; i < 8; i++) {
-				casas_destacadas.add(new int[] {p.posicao[0]+i,p.posicao[1]+i,p.posicao[2]+i});
-				casas_destacadas.add(new int[] {p.posicao[0]-i,p.posicao[1]+i,p.posicao[2]+i});
-				casas_destacadas.add(new int[] {p.posicao[0]+i,p.posicao[1]-i,p.posicao[2]+i});
-				casas_destacadas.add(new int[] {p.posicao[0]+i,p.posicao[1]+i,p.posicao[2]-i});
-				casas_destacadas.add(new int[] {p.posicao[0]-i,p.posicao[1]-i,p.posicao[2]+i});
-				casas_destacadas.add(new int[] {p.posicao[0]-i,p.posicao[1]-i,p.posicao[2]+i});
-				casas_destacadas.add(new int[] {p.posicao[0]-i,p.posicao[1]+i,p.posicao[2]-i});
-				casas_destacadas.add(new int[] {p.posicao[0]-i,p.posicao[1]-i,p.posicao[2]-i});
+			
+			for (int i = -1; i <= 1; i += 2) {
+				for (int j = -1; j <= 1; j += 2) {
+					for (int k = -1; k <= 1; k += 2) {
+						for (int l = 1; l < 8; l++) {
+							buff[0] += i;
+							buff[1] += j;
+							buff[2] += k;
+							casas_destacadas.add(buff.clone());
+							if (estaOcupada(buff)) {break;}
+						}
+						buff = p.posicao.clone();
+					}
+				}
 			} break;
 		}
 		
-		//HashSet<int[]> buffer = casas_destacadas;
-		//for (int[] casa : buffer) {
-		//	if (Arrays.equals(casa, p.posicao) || p.posicao[0]<0 || p.posicao[0]>7 || p.posicao[1]<0 || p.posicao[1]>7 || p.posicao[2]<0 || p.posicao[2]>7) {
-		//		casas_destacadas.remove(casa);
-		//	}
-		//}
+		ArrayList<int[]> buffer = new ArrayList<int[]>();
+		for (int[] casa : casas_destacadas) {
+			if (Arrays.equals(casa, p.posicao) || casa[0]<0 || casa[0]>7 || casa[1]<0 || casa[1]>7 || casa[2]<0 || casa[2]>7) {
+				buffer.add(casa);
+			}
+		}
+		casas_destacadas.removeAll(buffer);
+		buffer.clear();
+		if (p.isWhite) {
+			for (Peca peca : pecas_brancas) {
+				for (int[] casa : casas_destacadas) {
+					if (Arrays.equals(peca.posicao, casa)) {
+						buffer.add(casa);
+					}
+				}
+			}
+		} else {
+			for (Peca peca : pecas_pretas) {
+				for (int[] casa : casas_destacadas) {
+					if (Arrays.equals(peca.posicao, casa)) {
+						buffer.add(casa);
+					}
+				}
+			}
+		}
+		casas_destacadas.removeAll(buffer);
 		
 		for (int[] casa : casas_destacadas) {
 			g.setColor(destaque);
-			g.drawRect((25*casa[1])+(225*casa[2]), 25*casa[0], 25, 25);
+			g.drawRect((25*casa[1])+(225*casa[2]), 25*casa[0], 24, 24);
 		}
+	}
+	
+	public boolean estaOcupada(int[] casa) {
+		boolean b = false;
+		for (Peca peca : pecas_brancas) {
+			if (peca.posicao[0]==casa[0] && peca.posicao[1]==casa[1] && peca.posicao[2]==casa[2]) {
+				b = true;
+				System.out.println("false");
+				System.out.println(peca.id);
+				break;
+			}
+		}
+		for (Peca peca : pecas_pretas) {
+			if (peca.posicao[0]==casa[0] && peca.posicao[1]==casa[1] && peca.posicao[2]==casa[2]) {
+				b = true;
+				System.out.println("false");
+				System.out.println(peca.id);
+				break;
+			}
+		}
+		return b;
 	}
 	
 	public void limparDestaque() {
@@ -411,7 +623,7 @@ public class Tabuleiro extends JFrame {
 			else {
 				g.setColor(preto);
 			}
-			g.drawRect((25*pos[1])+(225*pos[2]), 25*pos[0], 25, 25);
+			g.drawRect((25*pos[1])+(225*pos[2]), 25*pos[0], 24, 24);
 		}
 		casas_destacadas.clear();
 	}
